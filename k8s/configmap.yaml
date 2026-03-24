@@ -1,0 +1,33 @@
+# ============================================================
+# ConfigMap — Application Configuration
+# ============================================================
+# A ConfigMap stores non-sensitive configuration as key-value pairs.
+#
+# WHY NOT HARDCODE? (Kubernetes concept: Externalized Configuration)
+#   → Hardcoding "mongodb://localhost:27017" in your code means:
+#     - Different code for dev vs staging vs production
+#     - Rebuilding the Docker image just to change a URL
+#   → With a ConfigMap, the SAME image works everywhere.
+#     You just swap the ConfigMap per environment.
+#
+# HOW IT WORKS:
+#   → K8s injects these as environment variables into the Pod.
+#   → The backend reads process.env.MONGO_URI — it has no idea
+#     whether that came from a ConfigMap, a Secret, or a .env file.
+#   → This is the "12-Factor App" config principle in action.
+#
+# REAL-WORLD:
+#   → At companies like Google/Amazon, teams manage hundreds of
+#     ConfigMaps per service — one per environment (dev, staging,
+#     canary, production). The app code never changes.
+# ============================================================
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: todo-config
+  labels:
+    app: todo-app
+data:
+  MONGO_URI: "mongodb://mongo-service:27017/tododb"
+  PORT: "5000"

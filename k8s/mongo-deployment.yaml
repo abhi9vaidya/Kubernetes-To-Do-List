@@ -1,0 +1,70 @@
+# ============================================================
+# MongoDB Deployment
+# ============================================================
+#
+# WHAT IS A DEPLOYMENT? (Kubernetes concept)
+#   → A Deployment tells Kubernetes: "Run N copies (replicas)
+#     of this container, and keep them running."
+#   → If a Pod crashes, the Deployment controller automatically
+#     creates a new one. You declare the DESIRED state, K8s
+#     makes it happen — this is "declarative infrastructure."
+#
+# WHAT IS A POD?
+#   → A Pod is the smallest deployable unit in Kubernetes.
+#   → It wraps one or more containers + shared storage + network.
+#   → Each Pod gets its own IP address.
+#   → Pods are ephemeral — they can be killed and replaced.
+#
+# WHY 1 REPLICA FOR MONGODB?
+#   → Databases are STATEFUL — they store data on disk.
+#   → Running multiple MongoDB replicas requires a ReplicaSet
+#     (MongoDB's own clustering), which is complex.
+#   → For learning, 1 replica is correct. In production, you'd
+#     use a StatefulSet with MongoDB ReplicaSet or a managed
+#     service like MongoDB Atlas.
+# ============================================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongo-deployment
+  labels:
+    app: todo-app
+    tier: database
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: todo-app
+      tier: database
+  template:
+    metadata:
+      labels:
+        app: todo-app
+        tier: database
+    spec:
+      containers:
+        - name: mongo
+          image: mongo:7
+          ports:
+            - containerPort: 27017
+          # Mount the persistent volume so data survives Pod restarts
+          volumeMounts:
+            - name: mongo-storage
+              mountPath: /data/db
+          # Inject credentials from the Secret
+          envFrom:
+            - secretRef:
+                name: mongo-secret
+          # Resource limits prevent a runaway container from eating all node resources
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+      volumes:
+        - name: mongo-storage
+          persistentVolumeClaim:
+            claimName: mongo-pvc

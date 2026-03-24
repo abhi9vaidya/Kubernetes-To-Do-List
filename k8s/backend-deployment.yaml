@@ -1,0 +1,78 @@
+# ============================================================
+# Backend Deployment
+# ============================================================
+#
+# WHY 2 REPLICAS?
+#   → This is where Kubernetes shines — horizontal scaling.
+#   → 2 replicas = 2 identical Pods running the same backend.
+#   → The K8s Service load-balances between them automatically.
+#   → If one Pod crashes, traffic flows to the other while K8s
+#     restarts the failed Pod. Zero downtime!
+#
+# WHY THIS WORKS (Stateless Design):
+#   → Our backend is STATELESS — no sessions, no in-memory data.
+#   → Every request just talks to MongoDB and returns.
+#   → So it doesn't matter which Pod handles which request.
+#   → This is WHY we designed the backend to be stateless in Phase 1.
+#
+# imagePullPolicy: Never
+#   → Tells K8s to use the locally-built Docker image, not pull
+#     from Docker Hub. For production, you'd push to a registry
+#     (Docker Hub, ECR, GCR) and remove this line.
+# ============================================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-deployment
+  labels:
+    app: todo-app
+    tier: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: todo-app
+      tier: backend
+  # Rolling update strategy for zero-downtime deployments
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: todo-app
+        tier: backend
+    spec:
+      containers:
+        - name: todo-backend
+          image: todo-backend:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 5000
+          # Inject config from ConfigMap
+          envFrom:
+            - configMapRef:
+                name: todo-config
+          # Health checks — K8s uses these to manage Pod lifecycle
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"

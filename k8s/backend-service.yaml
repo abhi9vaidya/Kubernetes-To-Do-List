@@ -1,0 +1,34 @@
+# ============================================================
+# Backend Service (ClusterIP)
+# ============================================================
+#
+# WHY CLUSTERIP for the backend?
+#   → The backend does NOT need external access.
+#   → Only the frontend Nginx Pod talks to it (via reverse proxy).
+#   → ClusterIP = internal-only, no exposure to the internet.
+#
+# HOW THE FRONTEND FINDS THIS:
+#   → In frontend/nginx.conf, we have:
+#     proxy_pass http://backend-service:5000/
+#   → "backend-service" is THIS Service's name.
+#   → K8s DNS resolves it automatically.
+#   → If we scale to 5 backend Pods, the Service load-balances
+#     across all of them — Nginx doesn't need to change.
+# ============================================================
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+  labels:
+    app: todo-app
+    tier: backend
+spec:
+  type: ClusterIP
+  selector:
+    app: todo-app
+    tier: backend
+  ports:
+    - port: 5000
+      targetPort: 5000
+      protocol: TCP

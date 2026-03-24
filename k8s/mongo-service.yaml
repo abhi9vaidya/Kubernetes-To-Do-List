@@ -1,0 +1,39 @@
+# ============================================================
+# MongoDB Service (ClusterIP)
+# ============================================================
+#
+# WHAT IS A SERVICE? (Kubernetes concept)
+#   → Pods are ephemeral — they get new IPs when they restart.
+#   → A Service provides a STABLE DNS name and IP for a set of Pods.
+#   → Other Pods use the Service name (not Pod IPs) to connect.
+#
+# CLUSTERIP (default type):
+#   → Only accessible INSIDE the cluster.
+#   → The backend Pod connects to "mongo-service:27017"
+#   → K8s DNS resolves "mongo-service" to the correct Pod.
+#   → Perfect for databases — you never want to expose them externally.
+#
+# HOW SELECTORS WORK:
+#   → The Service uses label selectors to find its Pods.
+#   → selector: { app: todo-app, tier: database } matches all
+#     Pods with those labels (our MongoDB Pod).
+#   → If you scale to 3 Mongo Pods (with a ReplicaSet), the
+#     Service automatically load-balances between them.
+# ============================================================
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo-service
+  labels:
+    app: todo-app
+    tier: database
+spec:
+  type: ClusterIP
+  selector:
+    app: todo-app
+    tier: database
+  ports:
+    - port: 27017
+      targetPort: 27017
+      protocol: TCP

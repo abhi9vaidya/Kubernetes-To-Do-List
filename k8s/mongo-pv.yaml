@@ -1,0 +1,62 @@
+# ============================================================
+# PersistentVolume (PV) & PersistentVolumeClaim (PVC) — MongoDB Storage
+# ============================================================
+#
+# WHY PERSISTENT STORAGE? (Kubernetes concept: Ephemeral Containers)
+#   → Containers are EPHEMERAL — when a Pod crashes or restarts,
+#     ALL data inside the container is LOST. Gone. Forever.
+#   → For a database like MongoDB, this is catastrophic.
+#     Imagine losing all your tasks every time K8s restarts a Pod.
+#
+# HOW IT WORKS:
+#   PersistentVolume (PV):
+#     → A piece of storage provisioned in the cluster.
+#     → Think of it as a "hard drive" that exists independently
+#       of any Pod. Pods come and go, the PV stays.
+#     → hostPath = uses a folder on the K8s node (for local dev).
+#       In production, you'd use AWS EBS, GCP PD, or Azure Disk.
+#
+#   PersistentVolumeClaim (PVC):
+#     → A request for storage by a Pod.
+#     → "I need 1Gi of storage with ReadWriteOnce access."
+#     → K8s matches the PVC to an available PV automatically.
+#
+#   PV = the actual disk.  PVC = the Pod's request for a disk.
+#
+# REAL-WORLD:
+#   → At scale, you'd use StatefulSets (not Deployments) for
+#     databases, with dynamic provisioning via StorageClasses.
+#   → Cloud providers auto-create PVs when a PVC is submitted.
+# ============================================================
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mongo-pv
+  labels:
+    app: todo-app
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/data/mongo"
+
+---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mongo-pvc
+  labels:
+    app: todo-app
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi

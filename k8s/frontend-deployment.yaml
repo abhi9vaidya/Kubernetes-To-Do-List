@@ -1,0 +1,65 @@
+# ============================================================
+# Frontend Deployment
+# ============================================================
+#
+# WHY 2 REPLICAS?
+#   → Same reason as the backend — high availability.
+#   → If one Nginx Pod dies, users still get served by the other.
+#   → Plus, 2 Pods handle more concurrent connections.
+#
+# WHAT'S INSIDE THIS POD:
+#   → An Nginx container serving:
+#     - Static files (index.html, app.js, styles.css)
+#     - Reverse proxy for /api/* → backend-service
+#   → It's the single entry point for users.
+# ============================================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-deployment
+  labels:
+    app: todo-app
+    tier: frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: todo-app
+      tier: frontend
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: todo-app
+        tier: frontend
+    spec:
+      containers:
+        - name: todo-frontend
+          image: todo-frontend:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 80
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "128Mi"
+              cpu: "100m"
