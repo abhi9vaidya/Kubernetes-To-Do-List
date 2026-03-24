@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="A microservices To-Do app deployed on Kubernetes" />
+  <title>☸️ K8s To-Do List</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <h1>☸️ K8s To-Do List</h1>
+      <p class="subtitle">Microservices • Docker • Kubernetes</p>
+    </header>
+
+    <!-- Add Task Form -->
+    <form id="task-form" class="task-form">
+      <input
+        type="text"
+        id="task-input"
+        placeholder="What needs to be done?"
+        autocomplete="off"
+        required
+      />
+      <button type="submit" id="add-btn">Add</button>
+    </form>
+
+    <!-- Task List -->
+    <ul id="task-list" class="task-list">
+      <!-- Tasks are rendered here by app.js -->
+    </ul>
+
+    <!-- Empty State -->
+    <p id="empty-state" class="empty-state">No tasks yet. Add one above! 🎉</p>
+
+    <!-- Status Bar -->
+    <footer class="status-bar">
+      <span id="task-count">0 tasks</span>
+      <span class="separator">•</span>
+      <span id="api-status" class="api-status">Connecting...</span>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
